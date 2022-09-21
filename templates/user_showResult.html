@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>user_showResult</title>
+</head>
+<body onload="user_show_img_Function()">
+    <div>
+        <h3>身體數據</h3>
+        <p>
+            {{ bodyData }}<br>
+            {{ pose_keypoints }}<br>
+            {% comment %}
+            <img src="{{ pose_img }}"/><br> 
+            <img src="{{ selectedcloth_img }}"/><br>
+            <img id="user_pose_img" style="height:270px; width:480px;"><br>
+            <img id="user_selectedcloth_img" style="height:270px; width:480px;"><br>
+            {% endcomment %}
+        </p>
+    </div>
+    <div>
+        <h3>建議尺寸</h3>
+        <p>
+            {{ size_result }}
+        </p>
+    </div>
+    <form method="get" action="">
+        {% csrf_token %}
+        <button type="submit">Go Home</button>
+    </form>
+</body>
+<script type="text/javascript">
+    function user_show_img_Function() {        
+        document.getElementById("user_pose_img").src="http://25.69.108.176:8000/user_pose_img";
+        document.getElementById("user_selectedcloth_img").src="http://25.69.108.176:8000/user_selectedcloth_img";
+    };
+</script>
+</html>

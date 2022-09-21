@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+{% load static %}
+<head>
+    <meta charset="UTF-8">
+    <title>home</title>
+</head>
+<body>
+    <div align="center">
+        <h1>首頁</h1>
+        {% comment %} <img src="{% static 'app/img/mirror_600.png'%}" width="500" heigh="300" alt="首頁圖片">
+        <br>    
+        <form method="get" action="shop_manual">
+                {% csrf_token %}
+                <button type="submit">Store</button>
+        </form>
+        <br> {% endcomment %}
+        <form method="get" action="user_manual">
+                {% csrf_token %}
+                <button type="submit">User</button>
+        </form>
+    
+    </div>
+</body>
+</html>
