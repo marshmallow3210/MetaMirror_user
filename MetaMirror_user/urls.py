@@ -18,12 +18,14 @@ from django.urls import path, re_path, include
 
 from django.conf import settings
 from django.conf.urls.static import static
-from app.views import openLidar
+from app.views import openLidar, user_showLidar,user_showResult
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('app.urls')),
-    re_path(r'^openLidar/$', openLidar)
+    re_path(r'^openLidar/$', openLidar),
+    re_path(r'^user_showLidar/$', user_showLidar),
+    re_path(r'^user_showResult/$', user_showResult)
 ]
 
 if settings.DEBUG:

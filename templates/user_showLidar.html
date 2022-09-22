@@ -9,10 +9,12 @@
     <br>
     <img id="openLidar" style="height:270px; width:480px;" >
     <br>
+    {% comment %} 
     <form method="post" action="user_showResult">
         {% csrf_token %}
         <button type="submit">user_showResult</button>
-    </form>
+    </form> {% endcomment %}
+    <button onclick="javascript:location.href='http://25.69.108.176:8000/user_showResult'">user_showResult</button>
     <button onclick="javascript:location.href='http://25.69.108.176:8000/user_selectCloth'">user_selectCloth</button>
     <br>
     {% comment %} 
