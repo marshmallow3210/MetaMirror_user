@@ -25,7 +25,7 @@ urlpatterns = [
     path('', include('app.urls')),
     re_path(r'^openLidar/$', openLidar),
     re_path(r'^user_showLidar/$', user_showLidar),
-    re_path(r'^user_showResult/$', user_showResult)
+    #re_path(r'^user_showResult/$', user_showResult)
 ]
 
 if settings.DEBUG:

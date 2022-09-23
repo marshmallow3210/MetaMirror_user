@@ -1,3 +1,4 @@
+import base64
 import cv2
 import time
 import json
@@ -272,7 +273,7 @@ def runLidar():
     print("INFO: The position of right hip is", hip_xyR, "px,", hip_depthR, "m")
     
     # get bodyData
-    global bodyData, pose_img, selectedcloth_img, pose_keypoints
+    global bodyData#, pose_img, selectedcloth_img, pose_keypoints
     
     bodyData = [0,0,0,0]
     shoulderWidth = 0
@@ -347,25 +348,24 @@ def runLidar():
     bodyData[2] = clothingLength
     print(bodyData)
 
-    json_string = {"version": 1.0, "people": [{"face_keypoints": [],
-                                                "pose_keypoints": [
-                                                    nose_xy[0], nose_xy[1], nose_depth, 
-                                                    shoulder_xyM[0], shoulder_xyM[1], shoulder_depthM,
-                                                    shoulder_xyR[0], shoulder_xyR[1], shoulder_depthR,
-                                                    elbow_xyR[0], elbow_xyR[1], elbow_depthR,
-                                                    wrist_xyR[0], wrist_xyR[1], wrist_depthR, 
-                                                    shoulder_xyL[0], shoulder_xyL[1], shoulder_depthL,
-                                                    elbow_xyL[0], elbow_xyL[1], elbow_depthL,
-                                                    wrist_xyL[0], wrist_xyL[1], wrist_depthL,
-                                                    hip_xyR[0], hip_xyR[1], hip_depthR,
-                                                    hip_xyL[0], hip_xyL[1], hip_depthL,
-                                                    eye_xyR[0], eye_xyR[1], eye_depthR, 
-                                                    eye_xyL[0], eye_xyL[1], eye_depthL,
-                                                    ear_xyR[0], ear_xyR[1], ear_depthR,
-                                                    ear_xyL[0], ear_xyL[1], ear_depthL,],
-                                                "hand_right_keypoints": [],
-                                                "hand_left_keypoints": []}]} 
-
+    global json_keypoints, json_user_img_data
+    
+    json_string = [
+                nose_xy[0], nose_xy[1], nose_depth, 
+                shoulder_xyM[0], shoulder_xyM[1], shoulder_depthM,
+                shoulder_xyR[0], shoulder_xyR[1], shoulder_depthR,
+                elbow_xyR[0], elbow_xyR[1], elbow_depthR,
+                wrist_xyR[0], wrist_xyR[1], wrist_depthR, 
+                shoulder_xyL[0], shoulder_xyL[1], shoulder_depthL,
+                elbow_xyL[0], elbow_xyL[1], elbow_depthL,
+                wrist_xyL[0], wrist_xyL[1], wrist_depthL,
+                hip_xyR[0], hip_xyR[1], hip_depthR,
+                hip_xyL[0], hip_xyL[1], hip_depthL,
+                eye_xyR[0], eye_xyR[1], eye_depthR, 
+                eye_xyL[0], eye_xyL[1], eye_depthL,
+                ear_xyR[0], ear_xyR[1], ear_depthR,
+                ear_xyL[0], ear_xyL[1], ear_depthL,] 
+    
     json_keypoints = json.dumps(json_string)
     print(json_keypoints)
     
@@ -376,43 +376,39 @@ def runLidar():
     # Using a JSON string
     with open('keypoints.json', 'w') as outfile:
         outfile.write(json_keypoints)
+
+    user_img_data = {}
+    with open('keypoints.jpg', mode='rb') as file:
+        user_img = file.read()
+    user_img_data['img'] = base64.encodebytes(user_img).decode('utf-8')
+
+    json_user_img_data = json.dumps(user_img_data)
     
-    bodyData=[37,42,66]
-    pose_img = cv2.imread('020000_0.jpg')
-    selectedcloth_img = cv2.imread('020000_1.jpg')
-    pose_keypoints = [95.76296296296296 ,85.33333333333333, 1.404750108718872, 
-                    99.55555555555556, 130.84444444444443, 1.4445000886917114, 
-                    66.84444444444445, 131.31851851851852, 1.4512500762939453, 
-                    41.24444444444445 ,180.62222222222223, 1.443000078201294, 
-                    10.42962962962963, 221.86666666666667, 1.4037500619888306, 
-                    132.26666666666668, 130.37037037037038, 1.4852501153945923, 
-                    156.44444444444446, 183.46666666666667, 1.567500114440918, 
-                    188.2074074074074, 232.2962962962963, 1.564500093460083, 
-                    79.17037037037036, 212.85925925925926, 1.3842500448226929, 
-                    0.0, 0.0, 0.0,
-                    0.0, 0.0, 0.0,
-                    116.62222222222222, 214.28148148148148, 1.409250020980835,
-                    0.0, 0.0, 0.0,
-                    0.0, 0.0, 0.0, 
-                    87.70370370370371 ,79.64444444444445, 1.41225004196167, 
-                    101.92592592592592, 79.17037037037036, 1.411500096321106,
-                    82.96296296296296 ,84.85925925925926, 1.4270000457763672, 
-                    109.98518518518519, 82.96296296296296, 1.4280000925064087]
-                 
+    with open('user_img_data.json', 'w') as file:
+        file.write(json_user_img_data)
+        
 def openLidar(request):
     print('open')
+    # bodyData = runLidar()
     return StreamingHttpResponse(runLidar(), content_type='multipart/x-mixed-replace; boundary=frame')
 
 def user_showLidar(request):
-    bodyData = runLidar()
-    return render(request,'user_showLidar.html',locals())
+    # openLidar(request)
+    # print('run')
+    # bodyData = runLidar()
+    # print('runrun')
+    # print(json_user_img_data)
+    # context = {
+    #     'json_keypoints': json_keypoints,
+    #     'json_user_img_data': json_user_img_data
+    # }
+    return render(request,'user_showLidar.html')
 
 def user_showResult(request):
     bodyDataName = ["肩寬","胸寬","身長"]
     size_str = ""
     size_cnt = []
     size_result = ""
-    bodyData=[37.999,42.999,66.999]
     # size chart, need to import from database
     chart = [[35, 40, 42, 43, 46],
             [49, 53, 57, 58, 62],
@@ -480,9 +476,9 @@ def user_showResult(request):
     """
     context = {
         'bodyDataList': bodyDataList,
-        'pose_keypoints': pose_keypoints,
-        'pose_img': pose_img,
-        'selectedcloth_img': selectedcloth_img,
+        # 'pose_keypoints': pose_keypoints,
+        # 'pose_img': pose_img,
+        # 'selectedcloth_img': selectedcloth_img,
         'size_result': size_result,
         #'resultImage':resultImage_uri,
     }

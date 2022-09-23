@@ -9,25 +9,20 @@
     <br>
     <img id="openLidar" style="height:270px; width:480px;" >
     <br>
-    {% comment %} 
-    <form method="post" action="user_showResult">
+    <form method="post" action="http://25.69.108.176:8000/user_showResult">
         {% csrf_token %}
-        <button type="submit">user_showResult</button>
-    </form> {% endcomment %}
-    <button onclick="javascript:location.href='http://25.69.108.176:8000/user_showResult'">user_showResult</button>
-    <button onclick="javascript:location.href='http://25.69.108.176:8000/user_selectCloth'">user_selectCloth</button>
-    <br>
-    {% comment %} 
-    <input type ="button" onclick="javascript:location.href='http://25.69.108.176:8000'" value="Go Home"></input>
-    <div>
-        {{ keypoints }}
-    </div>
-    {% endcomment %}
-    <p id="demo"></p>
+        <button>user_showResult</button>
+    </form>
+    {% csrf_token %}
+    <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
+        {% csrf_token %}
+        <button>user_selectCloth</button>
+    </form>
+    <p id="start"></p>
 </body>
 <script type="text/javascript">
     function openLidarFunction() {        
-        document.getElementById("demo").innerHTML = "start!";
+        document.getElementById("start").innerHTML = "start!";
         document.getElementById("openLidar").src="http://127.0.0.1:8000/openLidar";
     };
 </script>
