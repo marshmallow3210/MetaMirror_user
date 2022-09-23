@@ -60,7 +60,7 @@ def runLidar():
     depth_scale = depth_sensor.get_depth_scale()
     
     # We will be removing the background of objects more than clipping_distance_in_meters meters away
-    clipping_distance_in_meters = 1.6 # meters
+    clipping_distance_in_meters = 2.0 # meters
     clipping_distance = clipping_distance_in_meters / depth_scale
     
     # Create an align object
@@ -77,7 +77,7 @@ def runLidar():
     elbowPos = [0, 0, 0, 0] 
     wristPos = [0, 0, 0, 0] 
     
-    con = 10
+    con = 2
     print('start')
     
     while True:
@@ -151,7 +151,7 @@ def runLidar():
             cv2.imwrite('keypoints.jpg', color_image)
             print('end')
             break
-        time.sleep(0.2)
+        # time.sleep(0.2)
         
     # Intrinsics & Extrinsics
     depth_intrin = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
