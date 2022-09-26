@@ -8,10 +8,7 @@ import pyrealsense2 as rs
 from skimage import measure, filters
 from django.shortcuts import render
 from django.http import HttpResponse, StreamingHttpResponse
-
-global jk,juid
-jk=''
-juid=''
+from app.models import lidardataModel
 
 def home(request):
     return render(request,'home.html',locals())
@@ -110,7 +107,7 @@ def runLidar():
         # 轉換成byte，存在迭代器中
         yield (b'--frame\r\n'
                 b'Content-Type: image/jpeg\r\n\r\n' + decode_array.tobytes() + b'\r\n')		
-        print('decode_array type is', type(decode_array))
+        # print('decode_array type is', type(decode_array))
         
         results = holistic.process(color_image)
         
@@ -351,9 +348,6 @@ def runLidar():
     print("INFO: The clothingLength is", clothingLength, "cm")
     bodyData[2] = clothingLength
     print(bodyData)
-
-    global dataList
-    dataList = []
     
     json_string = [
                 nose_xy[0], nose_xy[1], nose_depth, 
@@ -390,35 +384,34 @@ def runLidar():
     user_img_data = {}
     with open('keypoints.jpg', mode='rb') as file:
         user_img = file.read()
+        
     user_img_data['poseImg'] = base64.encodebytes(user_img).decode('utf-8')
-    
-    json_user_img_data = json.dumps(user_img_data)
+    json_user_img_data = json.dumps(user_img_data['poseImg'])
     
     with open('user_img_data.json', 'w') as file:
         file.write(json_user_img_data)
     
-    json_keypoints = '[0,0,0]'
-    json_user_img_data = "/9j/4AAQSk"
-    dataList.append((json_keypoints,json_user_img_data))
-    print(dataList)
-    yield dataList[0]
+    lidardataModel.objects.create(poseImg=json_user_img_data)
+    lidardataModel.objects.create(keypoints=json_keypoints)
     
 def openLidar(request):
     print('open')
-    return StreamingHttpResponse(runLidar(jk,juid), content_type='multipart/x-mixed-replace; boundary=frame')
+    return StreamingHttpResponse(runLidar(), content_type='multipart/x-mixed-replace; boundary=frame')
 
 def user_showLidar(request):
     print('showLidar')
-    lidarGen = []
-    lidarGen = runLidar(jk, juid)
-    print(len(list(lidarGen)))
-    json_keypoints = (dataList[0])[0]
-    json_user_img_data = (dataList[0])[1]
+    lidardata = lidardataModel.objects.all()
+    if(len(lidardata)>=1):
+        lidardata=lidardata[len(lidardata)-1]
+    else:
+        lidardata=lidardata[0]
+    # print(lidardata.poseImg)
+    print(lidardata.keypoints)
     context = {
-        'json_keypoints': json_keypoints,
-        'json_user_img_data': json_user_img_data
+        'json_user_img_data': lidardata.poseImg,
+        'json_keypoints': lidardata.keypoints
     }
-    return render(request,'user_showLidar.html',context)
+    return render(request,'user_showLidar.html', context)
 
 def user_showResult(request):
     bodyDataName = ["肩寬","胸寬","身長"]

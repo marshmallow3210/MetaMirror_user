@@ -1,10 +1,7 @@
 from django import forms
-from .models import Modelimg
+from .models import lidardataModel
 
-class ModelForm(forms.ModelForm):
+class lidardataModelForm(forms.ModelForm):
     class Meta:
-        model = Modelimg
-        fields=('image',)
-        widgets={
-            'image': forms.FileInput(attrs={'class': 'form-control-file'})
-        }
+        model = lidardataModel
+        fields=('poseImg','keypoints')
