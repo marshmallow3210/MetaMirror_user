@@ -9,14 +9,11 @@
     <br>
     <img id="openLidar" style="height:270px; width:480px;" >
     <br>
-    <form method="post" action="http://25.69.108.176:8000/user_showResult">
-        {% csrf_token %}
-        <button>user_showResult</button>
-    </form>
-    {% csrf_token %}
     <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
         {% csrf_token %}
-        <button>user_selectCloth</button>
+        <input id="json_data" name="json_data" type="hidden">
+        <br>
+        <button id="user_selectCloth" onclick="openLidarFunction()" type="submit">user_selectCloth</button>
     </form>
     <p id="start"></p>
 </body>
@@ -24,6 +21,11 @@
     function openLidarFunction() {        
         document.getElementById("start").innerHTML = "start!";
         document.getElementById("openLidar").src="http://127.0.0.1:8000/openLidar";
+        setTimeout(function(){ 
+            document.getElementById("json_data").value = '"poseImg":{{ json_user_img_data }}, "keypoints":{{ json_keypoints }}';
+            var x = document.getElementById("json_data").value;
+            document.getElementById("start").innerHTML = x;
+        }, 1000);  
     };
 </script>
 </html>
