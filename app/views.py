@@ -8,7 +8,7 @@ import pyrealsense2 as rs
 from skimage import measure, filters
 from django.shortcuts import render
 from django.http import HttpResponse, StreamingHttpResponse
-from app.models import lidardataModel
+from app.models import bodyDataModel, lidardataModel
 
 def home(request):
     return render(request,'home.html',locals())
@@ -273,10 +273,8 @@ def runLidar():
     print("INFO: The position of left hip is", hip_xyL, "px,", hip_depthL, "m")
     print("INFO: The position of right hip is", hip_xyR, "px,", hip_depthR, "m")
     
-    # get bodyData
-    global bodyData#, pose_img, selectedcloth_img, pose_keypoints
-    
-    bodyData = [0,0,0,0]
+    global list_bodyData
+    list_bodyData = [0,0,0]
     shoulderWidth = 0
     chestWidth = 0
     clothingLength = 0
@@ -287,7 +285,7 @@ def runLidar():
             + (shoulderxyzL[2]-shoulderxyzR[2]) ** 2) ** 0.5
     shoulderWidth = shoulderWidth * 100 + 4
     print("INFO: The shoulderWidth is", shoulderWidth, "cm")
-    bodyData[0] = shoulderWidth
+    list_bodyData[0] = shoulderWidth
     
     # 1-chestWidth
     distY = abs(int((hipPos[1] - shoulderPos[1]) / 2))
@@ -335,7 +333,7 @@ def runLidar():
             + (chestxyzL[2]-chestxyzR[2]) ** 2) ** 0.5
     chestWidth = chestWidth * 100 + 3
     print("INFO: The chestWidth is", chestWidth, "cm")
-    bodyData[1] = chestWidth
+    list_bodyData[1] = chestWidth
         
     # 2-clothingLength
     clothingLength = (((shoulderxyzL[0]-hipxyzL[0]) ** 2 
@@ -346,8 +344,8 @@ def runLidar():
             + (shoulderxyzR[2]-hipxyzR[2]) ** 2) ** 0.5) / 2
     clothingLength = clothingLength * 100 + 4
     print("INFO: The clothingLength is", clothingLength, "cm")
-    bodyData[2] = clothingLength
-    print(bodyData)
+    list_bodyData[2] = clothingLength
+    # json_bodyData = json.dumps(list_bodyData)
     
     json_string = [
                 nose_xy[0], nose_xy[1], nose_depth, 
@@ -371,7 +369,7 @@ def runLidar():
                 ] 
     
     json_keypoints = json.dumps(json_string)
-    print(json_keypoints)
+    # print(json_keypoints)
     
     # Directly from dictionary
     with open('keypoints.json', 'w') as outfile:
@@ -391,8 +389,8 @@ def runLidar():
     with open('user_img_data.json', 'w') as file:
         file.write(json_user_img_data)
     
-    lidardataModel.objects.create(poseImg=json_user_img_data)
-    lidardataModel.objects.create(keypoints=json_keypoints)
+    lidardataModel.objects.create(poseImg=json_user_img_data,keypoints=json_keypoints)
+    bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[0],clothingLength=list_bodyData[0])
     
 def openLidar(request):
     print('open')
@@ -405,11 +403,17 @@ def user_showLidar(request):
         lidardata=lidardata[len(lidardata)-1]
     else:
         lidardata=lidardata[0]
-    # print(lidardata.poseImg)
-    print(lidardata.keypoints)
+    bodyData = bodyDataModel.objects.all()
+    if(len(bodyData)>=1):
+        bodyData=bodyData[len(bodyData)-1]
+    else:
+        bodyData=bodyData[0]
     context = {
-        'json_user_img_data': lidardata.poseImg,
-        'json_keypoints': lidardata.keypoints
+        'poseImg': lidardata.poseImg,
+        'keypoints': lidardata.keypoints,
+        'shoulderWidth': bodyData.shoulderWidth,
+        'chestWidth': bodyData.chestWidth,
+        'clothingLength': bodyData.clothingLength
     }
     return render(request,'user_showLidar.html', context)
 
@@ -426,15 +430,15 @@ def user_showResult(request):
 
     # compare with size chart
     for i in range(0, 3):
-        bodyData[i] = np.round(bodyData[i],2)
-        bodyData[i] = float(bodyData[i])
-        if bodyData[i] <= chart[i][0]:
+        list_bodyData[i] = np.round(list_bodyData[i],2)
+        list_bodyData[i] = float(list_bodyData[i])
+        if list_bodyData[i] <= chart[i][0]:
             size_str += "S"
-        elif bodyData[i] >= chart[i][0] and bodyData[i] <= chart[i][1]:
+        elif list_bodyData[i] >= chart[i][0] and list_bodyData[i] <= chart[i][1]:
             size_str += "M"
-        elif bodyData[i] >= chart[i][1] and bodyData[i] <= chart[i][2]:
+        elif list_bodyData[i] >= chart[i][1] and list_bodyData[i] <= chart[i][2]:
             size_str += "L"
-        elif bodyData[i] >= chart[i][2] and bodyData[i] <= chart[i][3]:
+        elif list_bodyData[i] >= chart[i][2] and list_bodyData[i] <= chart[i][3]:
             size_str += "XL"
         else:
             size_str += "2XL"
@@ -465,7 +469,7 @@ def user_showResult(request):
         size_result = "The fit size is S and the loose size is M"
         print("INFO: The fit size is S and the loose size is M")
 
-    bodyDataList = zip(bodyDataName , bodyData)
+    bodyDataList = zip(bodyDataName , list_bodyData)
     #get user selection of cloth image and data
     
     """

@@ -11,20 +11,26 @@
     <br>
     <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
         {% csrf_token %}
-        <input id="json_data" name="json_data" type="hidden">
         <br>
+        <input id="json_data" name="json_data" type="hidden">
+        <input id="json_bodyData" name="json_bodyData" type="hidden">
         <button id="user_selectCloth" onclick="openLidarFunction()" type="submit">user_selectCloth</button>
     </form>
     <p id="start"></p>
+    <p id="hello"></p>
 </body>
 <script type="text/javascript">
     function openLidarFunction() {        
+        document.getElementById("hello").innerHTML = "hello";
         document.getElementById("start").innerHTML = "start!";
         document.getElementById("openLidar").src="http://127.0.0.1:8000/openLidar";
         setTimeout(function(){ 
-            document.getElementById("json_data").value = '"poseImg":{{ json_user_img_data }}, "keypoints":{{ json_keypoints }}';
+            document.getElementById("json_data").value = '"poseImg":{{ poseImg }}, "keypoints":{{ keypoints }}';
             var x = document.getElementById("json_data").value;
             document.getElementById("start").innerHTML = x;
+            document.getElementById("json_bodyData").value = "[{{ shoulderWidth }}, {{ chestWidth }}, {{ clothingLength }}]";
+            var y = document.getElementById("json_bodyData").value;
+            document.getElementById("hello").innerHTML = y;
         }, 1000);  
     };
 </script>
