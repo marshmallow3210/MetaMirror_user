@@ -5,21 +5,23 @@
     <title>user_showLidar</title>
 </head>
 <body>
-    <button onclick="openLidarFunction()">開始測量身材</button>
-    <br>
-    <img id="openLidar" style="height:270px; width:480px;" >
-    <br>
-    <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
-        {% csrf_token %}
+    <div align="center">
+        <button onclick="openLidarFunction()">開始測量身材</button>
         <br>
-        <input id="poseImg" name="poseImg" type="hidden">
-        <input id="keypoints" name="keypoints" type="hidden">
-        <input id="shoulderWidth" name="shoulderWidth" type="hidden">
-        <input id="chestWidth" name="chestWidth" type="hidden">
-        <input id="clothingLength" name="clothingLength" type="hidden">
-        <button id="user_selectCloth" onclick="openLidarFunction()" type="submit">user_selectCloth</button>
-    </form>
-    <p id="start"></p>
+        <img id="openLidar" style="height:270px; width:480px;" >
+        <br>
+        <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
+            {% csrf_token %}
+            <br>
+            <input id="poseImg" name="poseImg" type="hidden">
+            <input id="keypoints" name="keypoints" type="hidden">
+            <input id="shoulderWidth" name="shoulderWidth" type="hidden">
+            <input id="chestWidth" name="chestWidth" type="hidden">
+            <input id="clothingLength" name="clothingLength" type="hidden">
+            <button id="user_selectCloth" onclick="openLidarFunction()" type="submit">user_selectCloth</button>
+        </form>
+        <p id="start"></p>
+    </div>
 </body>
 <script type="text/javascript">
     function openLidarFunction() {        
