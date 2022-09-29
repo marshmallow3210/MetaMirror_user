@@ -390,7 +390,7 @@ def runLidar():
         file.write(json_user_img_data)
     
     lidardataModel.objects.create(poseImg=json_user_img_data,keypoints=json_keypoints)
-    bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[0],clothingLength=list_bodyData[0])
+    bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
     
 def openLidar(request):
     print('open')

@@ -26,8 +26,8 @@
         document.getElementById("start").innerHTML = "start!";
         document.getElementById("openLidar").src="http://127.0.0.1:8000/openLidar";
         setTimeout(function(){ 
-            document.getElementById("poseImg").value = '"poseImg":{{ poseImg }}';
-            document.getElementById("keypoints").value = '"keypoints":{{ keypoints }}';
+            document.getElementById("poseImg").value = '{{ poseImg }}';
+            document.getElementById("keypoints").value = '{{ keypoints }}';
             document.getElementById("shoulderWidth").value = "{{ shoulderWidth }}";
             document.getElementById("chestWidth").value = "{{ chestWidth }}";
             document.getElementById("clothingLength").value = "{{ clothingLength }}";
