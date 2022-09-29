@@ -386,7 +386,7 @@ def runLidar():
     user_img_data['poseImg'] = base64.encodebytes(user_img).decode('utf-8')
     json_user_img_data = json.dumps(user_img_data['poseImg'])
     
-    with open('user_img_data.json', 'w') as file:
+    with open('poseImg.json', 'w') as file:
         file.write(json_user_img_data)
     
     lidardataModel.objects.create(poseImg=json_user_img_data,keypoints=json_keypoints)
