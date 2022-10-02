@@ -1,14 +1,15 @@
 <!DOCTYPE html>
+{% load static %}
 <html>
 <head>
     <meta charset="UTF-8">
     <title>user_showLidar</title>
 </head>
-<body>
+<body onload="sendData()">
     <div align="center">
-        <button onclick="openLidarFunction()">開始測量身材</button>
+        <img id="openLidar" style="height:270px; width:480px;">
         <br>
-        <img id="openLidar" style="height:270px; width:480px;" >
+        <button onclick="openLidarFunction()">開始測量身材</button>
         <br>
         <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
             {% csrf_token %}
@@ -18,22 +19,32 @@
             <input id="shoulderWidth" name="shoulderWidth" type="hidden">
             <input id="chestWidth" name="chestWidth" type="hidden">
             <input id="clothingLength" name="clothingLength" type="hidden">
-            <button id="user_selectCloth" onclick="openLidarFunction()" type="submit">user_selectCloth</button>
+            <button id="user_selectCloth" onclick="" type="submit">確認漂亮的自己並進到下一步去選擇漂亮衣服</button>
         </form>
         <p id="start"></p>
+        <p id="sendData"></p>
     </div>
 </body>
 <script type="text/javascript">
-    function openLidarFunction() {        
-        document.getElementById("start").innerHTML = "start!";
+    function openLidarFunction() {  
+        document.getElementById("start").innerHTML = "正在啟動鏡頭...";
         document.getElementById("openLidar").src="http://127.0.0.1:8000/openLidar";
         setTimeout(function(){ 
-            document.getElementById("poseImg").value = '{{ poseImg }}';
-            document.getElementById("keypoints").value = '{{ keypoints }}';
-            document.getElementById("shoulderWidth").value = "{{ shoulderWidth }}";
-            document.getElementById("chestWidth").value = "{{ chestWidth }}";
-            document.getElementById("clothingLength").value = "{{ clothingLength }}";
-        }, 1000);  
+            document.getElementById("start").style.visibility = "hidden";
+            //document.getElementById("openLidar").src="{% static 'app/poseImg.jpg' %}";
+            //window.location = window.location
+        }, 5000);  
+        setTimeout(function(){ 
+            window.location = window.location
+        }, 10000);  
     };
+    function sendData() {
+        document.getElementById("sendData").innerHTML = "{{ keypoints }}";
+        document.getElementById("poseImg").value = '{{ poseImg }}';
+        document.getElementById("keypoints").value = '{{ keypoints }}';
+        document.getElementById("shoulderWidth").value = "{{ shoulderWidth }}";
+        document.getElementById("chestWidth").value = "{{ chestWidth }}";
+        document.getElementById("clothingLength").value = "{{ clothingLength }}";
+    }
 </script>
 </html>

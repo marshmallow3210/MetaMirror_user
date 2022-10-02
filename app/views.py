@@ -7,8 +7,10 @@ import mediapipe as mp
 import pyrealsense2 as rs
 from skimage import measure, filters
 from django.shortcuts import render
-from django.http import HttpResponse, StreamingHttpResponse
+from django.http import StreamingHttpResponse
 from app.models import bodyDataModel, lidardataModel
+from django.conf import settings as django_settings
+import os
 
 def home(request):
     return render(request,'home.html',locals())
@@ -16,7 +18,7 @@ def home(request):
 def user_manual(request):
     return render(request,'user_manual.html',locals())
 
-def runLidar():    
+def runLidar(request):    
     # Create a pipeline
     pipeline = rs.pipeline()
     
@@ -79,7 +81,8 @@ def runLidar():
     wristPos = [0, 0, 0, 0] 
     
     con = 2
-    print('start')
+    print('runLidar')
+    time.sleep(2)
     
     while True:
         con -= 1
@@ -145,14 +148,10 @@ def runLidar():
             wristPos[2] = wristPos[2] + (results.pose_landmarks.landmark[mp_holistic.PoseLandmark.LEFT_WRIST].x*width)
             wristPos[3] = wristPos[3] + (results.pose_landmarks.landmark[mp_holistic.PoseLandmark.LEFT_WRIST].y*height)
         
-        
-        print(con)
         if con <= 0:
             pipeline.stop()
-            cv2.imwrite('keypoints.jpg', color_image)
-            print('end')
+            cv2.imwrite('poseImg.jpg', color_image)
             break
-        # time.sleep(0.2)
         
     # Intrinsics & Extrinsics
     depth_intrin = aligned_depth_frame.profile.as_video_stream_profile().intrinsics
@@ -182,7 +181,7 @@ def runLidar():
     images = cv2.bilateralFilter(images,9,75,75) # 雙向濾波
     kernel = np.ones((3, 3), np.uint8)
     images = cv2.morphologyEx(images, cv2.MORPH_CLOSE, kernel) # closing
-    cv2.imwrite('keypoints_bg_removed.jpg', images)
+    cv2.imwrite('poseImg_bg_removed.jpg', images)
     
     
     # get keypoints' 3d coordinate
@@ -345,9 +344,8 @@ def runLidar():
     clothingLength = clothingLength * 100 + 4
     print("INFO: The clothingLength is", clothingLength, "cm")
     list_bodyData[2] = clothingLength
-    # json_bodyData = json.dumps(list_bodyData)
     
-    json_string = [
+    keypoints = [
                 nose_xy[0], nose_xy[1], nose_depth, 
                 shoulder_xyM[0], shoulder_xyM[1], shoulder_depthM,
                 shoulder_xyR[0], shoulder_xyR[1], shoulder_depthR,
@@ -365,36 +363,38 @@ def runLidar():
                 eye_xyR[0], eye_xyR[1], eye_depthR, 
                 eye_xyL[0], eye_xyL[1], eye_depthL,
                 ear_xyR[0], ear_xyR[1], ear_depthR,
-                ear_xyL[0], ear_xyL[1], ear_depthL,
-                ] 
-    
-    json_keypoints = json.dumps(json_string)
-    # print(json_keypoints)
-    
-    # Directly from dictionary
+                ear_xyL[0], ear_xyL[1], ear_depthL,] 
+    str_keypoints = json.dumps(keypoints)
     with open('keypoints.json', 'w') as outfile:
-        json.dump(json_keypoints, outfile)
-    
-    # Using a JSON string
-    with open('keypoints.json', 'w') as outfile:
-        outfile.write(json_keypoints)
+        outfile.write(str_keypoints)
 
-    user_img_data = {}
-    with open('keypoints.jpg', mode='rb') as file:
-        user_img = file.read()
-        
-    user_img_data['poseImg'] = base64.encodebytes(user_img).decode('utf-8')
-    json_user_img_data = json.dumps(user_img_data['poseImg'])
-    
+    str_poseImg = {}
+    poseImg = cv2.imread('poseImg.jpg')
+    str_poseImg = base64.b64encode(cv2.imencode('.jpg',poseImg)[1]).decode('ascii')
     with open('poseImg.json', 'w') as file:
-        file.write(json_user_img_data)
-    
-    lidardataModel.objects.create(poseImg=json_user_img_data,keypoints=json_keypoints)
+        file.write(str_poseImg)
+        
+    print('create model')
+    lidardataModel.objects.create(poseImg=str_poseImg,keypoints=str_keypoints)
     bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
+    lidardata = lidardataModel.objects.all()
+    if(len(lidardata)>=1):
+        lidardata=lidardata[len(lidardata)-1]
+    else:
+        lidardata=lidardata[0]
+    bodyData = bodyDataModel.objects.all()
+    if(len(bodyData)>=1):
+        bodyData=bodyData[len(bodyData)-1]
+    else:
+        bodyData=bodyData[0]
+        
+    print(lidardata.keypoints)
+    print(bodyData.shoulderWidth)
+    return user_showLidar(request)
     
 def openLidar(request):
     print('open')
-    return StreamingHttpResponse(runLidar(), content_type='multipart/x-mixed-replace; boundary=frame')
+    return StreamingHttpResponse(runLidar(request), content_type='multipart/x-mixed-replace; boundary=frame')
 
 def user_showLidar(request):
     print('showLidar')
@@ -408,6 +408,10 @@ def user_showLidar(request):
         bodyData=bodyData[len(bodyData)-1]
     else:
         bodyData=bodyData[0]
+        
+    print(lidardata.keypoints)
+    print(bodyData.shoulderWidth)
+    
     context = {
         'poseImg': lidardata.poseImg,
         'keypoints': lidardata.keypoints,
@@ -416,84 +420,3 @@ def user_showLidar(request):
         'clothingLength': bodyData.clothingLength
     }
     return render(request,'user_showLidar.html', context)
-
-def user_showResult(request):
-    bodyDataName = ["肩寬","胸寬","身長"]
-    size_str = ""
-    size_cnt = []
-    size_result = ""
-    # size chart, need to import from database
-    chart = [[35, 40, 42, 43, 46],
-            [49, 53, 57, 58, 62],
-            [70, 75, 78, 81, 82],
-            [30, 32, 33, 34, 35]]
-
-    # compare with size chart
-    for i in range(0, 3):
-        list_bodyData[i] = np.round(list_bodyData[i],2)
-        list_bodyData[i] = float(list_bodyData[i])
-        if list_bodyData[i] <= chart[i][0]:
-            size_str += "S"
-        elif list_bodyData[i] >= chart[i][0] and list_bodyData[i] <= chart[i][1]:
-            size_str += "M"
-        elif list_bodyData[i] >= chart[i][1] and list_bodyData[i] <= chart[i][2]:
-            size_str += "L"
-        elif list_bodyData[i] >= chart[i][2] and list_bodyData[i] <= chart[i][3]:
-            size_str += "XL"
-        else:
-            size_str += "2XL"
-
-    # descending order, because of index()
-    size_cnt.append(size_str.count("2XL"))
-    size_cnt.append(size_str.count("XL"))
-    size_cnt.append(size_str.count("L"))
-    size_cnt.append(size_str.count("M"))
-    size_cnt.append(size_str.count("S"))
-    print(size_str)
-    print(size_cnt)
-
-    recommend_size = size_cnt.index(max(size_cnt))
-    if recommend_size == 0:
-        size_result = "The fit size is 2XL and the loose size is 3XL"
-        print("INFO: The fit size is 2XL and the loose size is 3XL")
-    elif recommend_size == 1:
-        size_result = "The fit size is XL and the loose size is 2XL"
-        print("INFO: The fit size is XL and the loose size is 2XL")
-    elif recommend_size == 2:
-        size_result = "The fit size is L and the loose size is XL"
-        print("INFO: The fit size is L and the loose size is XL")
-    elif recommend_size == 3:
-        size_result = "The fit size is M and the loose size is L"
-        print("INFO: The fit size is M and the loose size is L")
-    else:
-        size_result = "The fit size is S and the loose size is M"
-        print("INFO: The fit size is S and the loose size is M")
-
-    bodyDataList = zip(bodyDataName , list_bodyData)
-    #get user selection of cloth image and data
-    
-    """
-    #test
-    edgeImg,labelImg=getEdgeAndLebel(selectedcloth_img, pose_img)
-    maskImg=Image.open('00000.png').convert('L')
-    colorMaskImg=Image.open('00000_test.png').convert('L')
-    resultImage_uri=generateImage(labelImg, pose_img, selectedcloth_img, colorMaskImg, edgeImg, maskImg, pose_keypoints)
-    
-    cloth = NULL
-    cloth_data=NULL
-    if request.method == "POST":
-        print(request.POST['cloth'])
-        cloth=Cloth.objects.get(id=request.POST['cloth'])
-        cloth_data=Cloth_data.objects.get(image_ID=request.POST['cloth'])
-        print(cloth_data)
-    """
-    context = {
-        'bodyDataList': bodyDataList,
-        # 'pose_keypoints': pose_keypoints,
-        # 'pose_img': pose_img,
-        # 'selectedcloth_img': selectedcloth_img,
-        'size_result': size_result,
-        #'resultImage':resultImage_uri,
-    }
-    
-    return render(request,'user_showResult.html', context)
