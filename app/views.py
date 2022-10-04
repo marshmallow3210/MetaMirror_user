@@ -1,4 +1,5 @@
 import base64
+from re import X
 import cv2
 import time
 import json
@@ -8,9 +9,12 @@ import pyrealsense2 as rs
 from skimage import measure, filters
 from django.shortcuts import render
 from django.http import StreamingHttpResponse
-from app.models import bodyDataModel, lidardataModel
-from django.conf import settings as django_settings
+from app.admin import UserImgAdmin
+from app.models import UserImgModel, bodyDataModel, lidardataModel
+from django.conf import settings
 import os
+
+# INPUT_IMAGE = settings.MEDIA_ROOT / 'UserImg.jpg'
 
 def home(request):
     return render(request,'home.html',locals())
@@ -150,7 +154,10 @@ def runLidar(request):
         
         if con <= 0:
             pipeline.stop()
-            cv2.imwrite('poseImg.jpg', color_image)
+            UserImg = UserImgModel.objects.all()
+            path = 'C:/Users/amy21/Documents/GitHub/MetaMirror_user/media/UserImg'
+            cv2.imwrite(os.path.join(path, 'poseImg_'+ str(len(UserImg)) +'.jpg'), color_image)
+            UserImgModel.objects.create(image='UserImg/poseImg_'+ str(len(UserImg)) +'.jpg')
             break
         
     # Intrinsics & Extrinsics
@@ -277,7 +284,7 @@ def runLidar(request):
     shoulderWidth = 0
     chestWidth = 0
     clothingLength = 0
-    if (shoulderxyzL[2] != 0 and shoulderxyzR[2] != 0 and hipxyzL[2] != 0 and hipxyzR[2] != 0):
+    if (shoulderxyzL[0] != 0 and shoulderxyzL[1] != 0 and shoulderxyzL[2] != 0):
         # 0-shoulderWidth
         shoulderWidth = ((shoulderxyzL[0]-shoulderxyzR[0]) ** 2 
                 + (shoulderxyzL[1]-shoulderxyzR[1]) ** 2 
@@ -374,14 +381,8 @@ def runLidar(request):
         with open('poseImg.json', 'w') as file:
             file.write(str_poseImg)
         
-        # print('create models')
         lidardataModel.objects.create(poseImg=str_poseImg,keypoints=str_keypoints)
         bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
-        # lidardata = lidardataModel.objects.all()
-        # if(len(lidardata)>=1):
-        #     lidardata=lidardata[len(lidardata)-1]
-        # else:
-        #     lidardata=lidardata[0]
         bodyData = bodyDataModel.objects.all()
         if(len(bodyData)>=1):
             bodyData=bodyData[len(bodyData)-1]
@@ -396,8 +397,7 @@ def runLidar(request):
             bodyData=bodyData[len(bodyData)-1]
         else:
             bodyData=bodyData[0]
-        print(bodyData.shoulderWidth)
-        print("measurement failed")
+        print("measurement failed, bodyData:", bodyData.shoulderWidth, bodyData.chestWidth, bodyData.clothingLength)
     return user_showLidar(request)
     
 def openLidar(request):
@@ -417,20 +417,25 @@ def user_showLidar(request):
     else:
         bodyData=bodyData[0]
         
-    print(bodyData.shoulderWidth)
+    print('shoulderWidth', bodyData.shoulderWidth)
     if bodyData.shoulderWidth == "0":
         measurement = 0
-        # measurement = "測量失敗，請再重新測量一次！"
     else:
         measurement = 1
-        # measurement = "測量成功，請進入下一步選擇衣服！"
 
+    UserImg = UserImgModel.objects.all()
+    if(len(UserImg)>=1):
+        UserImg=UserImg[len(UserImg)-1]
+    else:
+        UserImg=UserImg[0]
+    
     context = {
         'poseImg': lidardata.poseImg,
         'keypoints': lidardata.keypoints,
         'shoulderWidth': bodyData.shoulderWidth,
         'chestWidth': bodyData.chestWidth,
         'clothingLength': bodyData.clothingLength,
-        'measurement': measurement
+        'measurement': measurement,
+        'UserImg': UserImg
     }
     return render(request,'user_showLidar.html', context)

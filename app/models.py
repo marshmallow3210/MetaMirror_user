@@ -8,3 +8,6 @@ class bodyDataModel(models.Model):
     shoulderWidth = models.TextField()
     chestWidth = models.TextField()
     clothingLength = models.TextField()
+    
+class UserImgModel(models.Model):
+    image = models.ImageField(upload_to='UserImg/')

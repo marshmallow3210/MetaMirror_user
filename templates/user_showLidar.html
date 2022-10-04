@@ -9,7 +9,12 @@
     <div align="center">
         <img id="openLidar" style="height:270px; width:480px;">
         <br>
-        <button onclick="openLidarFunction()">開始測量身材</button>
+        <input id="openLidarBTN" onclick="openLidarFunction()" type="button" value="開始測量身材">
+        {% block content %}
+            {% if UserImg.image %}
+                {% comment %} <img src="{{ UserImg.image.url }}" alt="UserImg"> {% endcomment %}
+            {% endif %}
+        {% endblock  %}
         <br>
         <p id="start"></p>
         <p><strong><span id="measurement"></span></strong></p>
@@ -48,6 +53,8 @@
             document.getElementById("user_selectCloth").style.visibility = "hidden";
         }
         else {
+            document.getElementById("openLidar").src="{{ UserImg.image.url }}";
+            document.getElementById("openLidarBTN").value = "重新測量身材";
             document.getElementById("poseImg").value = '{{ poseImg }}';
             document.getElementById("keypoints").value = '{{ keypoints }}';
             document.getElementById("shoulderWidth").value = "{{ shoulderWidth }}";
@@ -56,12 +63,12 @@
             document.getElementById("measurement").value = "{{ measurement }}";
             var m = Number(document.getElementById("measurement").value)
             console.log(m, typeof m);
+
             if (m == 0){
                 document.getElementById("measurement").innerHTML = "測量失敗，請再重新測量一次！";
                 document.getElementById("user_selectCloth").style.visibility = "hidden";
             }
             else {
-                //document.getElementById("openLidar").src="{% static 'app/poseImg.jpg' %}";
                 document.getElementById("measurement").innerHTML = "測量成功，請進入下一步選擇衣服！";
                 document.getElementById("user_selectCloth").style.visibility = "visible";
             }
@@ -78,5 +85,4 @@
         }, 8000);  
     };
 </script>
-
 </html>
