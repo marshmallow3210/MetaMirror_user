@@ -1,16 +1,18 @@
 <!DOCTYPE html>
 {% load static %}
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8">
+    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
     <title>user_showLidar</title>
 </head>
-<body onload="sendData()">
+<body>
     <div align="center">
         <img id="openLidar" style="height:270px; width:480px;">
         <br>
         <button onclick="openLidarFunction()">開始測量身材</button>
         <br>
+        <p id="start"></p>
+        <p><strong><span id="measurement"></span></strong></p>
         <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
             {% csrf_token %}
             <br>
@@ -21,30 +23,60 @@
             <input id="clothingLength" name="clothingLength" type="hidden">
             <button id="user_selectCloth" onclick="" type="submit">確認漂亮的自己並進到下一步去選擇漂亮衣服</button>
         </form>
-        <p id="start"></p>
         <p id="sendData"></p>
+        <p><strong>You have visited this page: </strong><span id="visits">0 times</span></p>
     </div>
 </body>
+<script type="text/javascript" src="http://blogs.sitepointstatic.com/examples/tech/js-session/json-serialization.js"></script>
+<script type="text/javascript" src="http://blogs.sitepointstatic.com/examples/tech/js-session/session.js"></script>
 <script type="text/javascript">
+    var counter = Session.get("counter") || {
+        visits: 0,
+        time: []
+    };
+    // onload
+    window.onload = function() {
+        // update previous visits
+        counter.visits++;
+        // update page
+        document.getElementById("visits").firstChild.nodeValue = counter.visits + " time" + (counter.visits == 1 ? "" : "s");
+        // store value in session
+        Session.set("counter", counter);
+        // check measurement and update data
+        if (counter.visits <= 1) {
+            document.getElementById("measurement").style.visibility = "hidden";
+            document.getElementById("user_selectCloth").style.visibility = "hidden";
+        }
+        else {
+            document.getElementById("poseImg").value = '{{ poseImg }}';
+            document.getElementById("keypoints").value = '{{ keypoints }}';
+            document.getElementById("shoulderWidth").value = "{{ shoulderWidth }}";
+            document.getElementById("chestWidth").value = "{{ chestWidth }}";
+            document.getElementById("clothingLength").value = "{{ clothingLength }}";
+            document.getElementById("measurement").value = "{{ measurement }}";
+            var m = Number(document.getElementById("measurement").value)
+            console.log(m, typeof m);
+            if (m == 0){
+                document.getElementById("measurement").innerHTML = "測量失敗，請再重新測量一次！";
+                document.getElementById("user_selectCloth").style.visibility = "hidden";
+            }
+            else {
+                //document.getElementById("openLidar").src="{% static 'app/poseImg.jpg' %}";
+                document.getElementById("measurement").innerHTML = "測量成功，請進入下一步選擇衣服！";
+                document.getElementById("user_selectCloth").style.visibility = "visible";
+            }
+        }
+    };
+
     function openLidarFunction() {  
-        document.getElementById("start").innerHTML = "正在啟動鏡頭...";
         document.getElementById("openLidar").src="http://127.0.0.1:8000/openLidar";
         setTimeout(function(){ 
             document.getElementById("start").style.visibility = "hidden";
-            //document.getElementById("openLidar").src="{% static 'app/poseImg.jpg' %}";
-            //window.location = window.location
         }, 5000);  
         setTimeout(function(){ 
             window.location = window.location
-        }, 10000);  
+        }, 8000);  
     };
-    function sendData() {
-        document.getElementById("sendData").innerHTML = "{{ keypoints }}";
-        document.getElementById("poseImg").value = '{{ poseImg }}';
-        document.getElementById("keypoints").value = '{{ keypoints }}';
-        document.getElementById("shoulderWidth").value = "{{ shoulderWidth }}";
-        document.getElementById("chestWidth").value = "{{ chestWidth }}";
-        document.getElementById("clothingLength").value = "{{ clothingLength }}";
-    }
 </script>
+
 </html>

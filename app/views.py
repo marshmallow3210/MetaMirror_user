@@ -277,119 +277,127 @@ def runLidar(request):
     shoulderWidth = 0
     chestWidth = 0
     clothingLength = 0
-    
-    # 0-shoulderWidth
-    shoulderWidth = ((shoulderxyzL[0]-shoulderxyzR[0]) ** 2 
-            + (shoulderxyzL[1]-shoulderxyzR[1]) ** 2 
-            + (shoulderxyzL[2]-shoulderxyzR[2]) ** 2) ** 0.5
-    shoulderWidth = shoulderWidth * 100 + 4
-    print("INFO: The shoulderWidth is", shoulderWidth, "cm")
-    list_bodyData[0] = shoulderWidth
-    
-    # 1-chestWidth
-    distY = abs(int((hipPos[1] - shoulderPos[1]) / 2))
-    # up to down
-    for i in range(int(shoulderPos[1]), int(shoulderPos[1]) + distY):
-        depthL = aligned_depth_frame.get_distance(int(shoulderPos[0]-20), int(i))
-        # print(depthL)
-        if (depthL == 0 or depthL > 2.6):
-            # left to right
-            for j in range(int(shoulderPos[0]-20), int(shoulderPos[0])):
-                depthL = aligned_depth_frame.get_distance(int(j), int(i))
-                # print(j, " ", i)
-                # print(depthL)
-                if (depthL > 0 and depthL < 2.6):
-                    xyL = [j, i]
-                    chestxyzL = rs.rs2_deproject_pixel_to_point(depth_intrin, xyL, depthL)
-                    break
-            break
-        else:
-            xyL = [int(shoulderPos[0]-20), i]
-            chestxyzL = rs.rs2_deproject_pixel_to_point(depth_intrin, xyL, depthL)
-    
-    distY = abs(int((hipPos[3] - shoulderPos[3]) / 2))
-    # up to down
-    for i in range(int(shoulderPos[3]), int(shoulderPos[3]) + distY):
-        depthR = aligned_depth_frame.get_distance(int(shoulderPos[2]+20), int(i))
-        # print(depthR)
-        if (depthR == 0 or depthR > 2.6):
-            # left to right
-            for j in range(int(shoulderPos[2]+20), int(shoulderPos[2]), -1):
-                depthR = aligned_depth_frame.get_distance(int(j), int(i))
-                # print(j, " ", i)
-                # print(depthR)
-                if (depthR > 0 and depthR < 2.6):
-                    xyR = [j, i]
-                    chestxyzR = rs.rs2_deproject_pixel_to_point(depth_intrin, xyR, depthR)
-                    break
-            break
-        else:
-            xyR = [int(shoulderPos[2]+20), i]
-            chestxyzR = rs.rs2_deproject_pixel_to_point(depth_intrin, xyR, depthR)
+    if (shoulderxyzL[2] != 0 and shoulderxyzR[2] != 0 and hipxyzL[2] != 0 and hipxyzR[2] != 0):
+        # 0-shoulderWidth
+        shoulderWidth = ((shoulderxyzL[0]-shoulderxyzR[0]) ** 2 
+                + (shoulderxyzL[1]-shoulderxyzR[1]) ** 2 
+                + (shoulderxyzL[2]-shoulderxyzR[2]) ** 2) ** 0.5
+        shoulderWidth = shoulderWidth * 100 + 4
+        print("INFO: The shoulderWidth is", shoulderWidth, "cm")
+        list_bodyData[0] = shoulderWidth
+        
+        # 1-chestWidth
+        distY = abs(int((hipPos[1] - shoulderPos[1]) / 2))
+        # up to down
+        for i in range(int(shoulderPos[1]), int(shoulderPos[1]) + distY):
+            depthL = aligned_depth_frame.get_distance(int(shoulderPos[0]-20), int(i))
+            # print(depthL)
+            if (depthL == 0 or depthL > 2.6):
+                # left to right
+                for j in range(int(shoulderPos[0]-20), int(shoulderPos[0])):
+                    depthL = aligned_depth_frame.get_distance(int(j), int(i))
+                    # print(j, " ", i)
+                    # print(depthL)
+                    if (depthL > 0 and depthL < 2.6):
+                        xyL = [j, i]
+                        chestxyzL = rs.rs2_deproject_pixel_to_point(depth_intrin, xyL, depthL)
+                        break
+                break
+            else:
+                xyL = [int(shoulderPos[0]-20), i]
+                chestxyzL = rs.rs2_deproject_pixel_to_point(depth_intrin, xyL, depthL)
+        
+        distY = abs(int((hipPos[3] - shoulderPos[3]) / 2))
+        # up to down
+        for i in range(int(shoulderPos[3]), int(shoulderPos[3]) + distY):
+            depthR = aligned_depth_frame.get_distance(int(shoulderPos[2]+20), int(i))
+            # print(depthR)
+            if (depthR == 0 or depthR > 2.6):
+                # left to right
+                for j in range(int(shoulderPos[2]+20), int(shoulderPos[2]), -1):
+                    depthR = aligned_depth_frame.get_distance(int(j), int(i))
+                    # print(j, " ", i)
+                    # print(depthR)
+                    if (depthR > 0 and depthR < 2.6):
+                        xyR = [j, i]
+                        chestxyzR = rs.rs2_deproject_pixel_to_point(depth_intrin, xyR, depthR)
+                        break
+                break
+            else:
+                xyR = [int(shoulderPos[2]+20), i]
+                chestxyzR = rs.rs2_deproject_pixel_to_point(depth_intrin, xyR, depthR)
+                
+        chestWidth = ((chestxyzL[0]-chestxyzR[0]) ** 2 
+                + (chestxyzL[1]-chestxyzR[1]) ** 2 
+                + (chestxyzL[2]-chestxyzR[2]) ** 2) ** 0.5
+        chestWidth = chestWidth * 100 + 3
+        print("INFO: The chestWidth is", chestWidth, "cm")
+        list_bodyData[1] = chestWidth
             
-    chestWidth = ((chestxyzL[0]-chestxyzR[0]) ** 2 
-            + (chestxyzL[1]-chestxyzR[1]) ** 2 
-            + (chestxyzL[2]-chestxyzR[2]) ** 2) ** 0.5
-    chestWidth = chestWidth * 100 + 3
-    print("INFO: The chestWidth is", chestWidth, "cm")
-    list_bodyData[1] = chestWidth
+        # 2-clothingLength
+        clothingLength = (((shoulderxyzL[0]-hipxyzL[0]) ** 2 
+                + (shoulderxyzL[1]-hipxyzL[1]) ** 2 
+                + (shoulderxyzL[2]-hipxyzL[2]) ** 2) ** 0.5
+                + ((shoulderxyzR[0]-hipxyzR[0]) ** 2 
+                + (shoulderxyzR[1]-hipxyzR[1]) ** 2 
+                + (shoulderxyzR[2]-hipxyzR[2]) ** 2) ** 0.5) / 2
+        clothingLength = clothingLength * 100 + 4
+        print("INFO: The clothingLength is", clothingLength, "cm")
+        list_bodyData[2] = clothingLength
         
-    # 2-clothingLength
-    clothingLength = (((shoulderxyzL[0]-hipxyzL[0]) ** 2 
-            + (shoulderxyzL[1]-hipxyzL[1]) ** 2 
-            + (shoulderxyzL[2]-hipxyzL[2]) ** 2) ** 0.5
-            + ((shoulderxyzR[0]-hipxyzR[0]) ** 2 
-            + (shoulderxyzR[1]-hipxyzR[1]) ** 2 
-            + (shoulderxyzR[2]-hipxyzR[2]) ** 2) ** 0.5) / 2
-    clothingLength = clothingLength * 100 + 4
-    print("INFO: The clothingLength is", clothingLength, "cm")
-    list_bodyData[2] = clothingLength
-    
-    keypoints = [
-                nose_xy[0], nose_xy[1], nose_depth, 
-                shoulder_xyM[0], shoulder_xyM[1], shoulder_depthM,
-                shoulder_xyR[0], shoulder_xyR[1], shoulder_depthR,
-                elbow_xyR[0], elbow_xyR[1], elbow_depthR,
-                wrist_xyR[0], wrist_xyR[1], wrist_depthR, 
-                shoulder_xyL[0], shoulder_xyL[1], shoulder_depthL,
-                elbow_xyL[0], elbow_xyL[1], elbow_depthL,
-                wrist_xyL[0], wrist_xyL[1], wrist_depthL,
-                hip_xyR[0], hip_xyR[1], hip_depthR,
-                0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0, 
-                hip_xyL[0], hip_xyL[1], hip_depthL,
-                0.0, 0.0, 0.0,
-                0.0, 0.0, 0.0, 
-                eye_xyR[0], eye_xyR[1], eye_depthR, 
-                eye_xyL[0], eye_xyL[1], eye_depthL,
-                ear_xyR[0], ear_xyR[1], ear_depthR,
-                ear_xyL[0], ear_xyL[1], ear_depthL,] 
-    str_keypoints = json.dumps(keypoints)
-    with open('keypoints.json', 'w') as outfile:
-        outfile.write(str_keypoints)
+        keypoints = [
+                    nose_xy[0], nose_xy[1], nose_depth, 
+                    shoulder_xyM[0], shoulder_xyM[1], shoulder_depthM,
+                    shoulder_xyR[0], shoulder_xyR[1], shoulder_depthR,
+                    elbow_xyR[0], elbow_xyR[1], elbow_depthR,
+                    wrist_xyR[0], wrist_xyR[1], wrist_depthR, 
+                    shoulder_xyL[0], shoulder_xyL[1], shoulder_depthL,
+                    elbow_xyL[0], elbow_xyL[1], elbow_depthL,
+                    wrist_xyL[0], wrist_xyL[1], wrist_depthL,
+                    hip_xyR[0], hip_xyR[1], hip_depthR,
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, 
+                    hip_xyL[0], hip_xyL[1], hip_depthL,
+                    0.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, 
+                    eye_xyR[0], eye_xyR[1], eye_depthR, 
+                    eye_xyL[0], eye_xyL[1], eye_depthL,
+                    ear_xyR[0], ear_xyR[1], ear_depthR,
+                    ear_xyL[0], ear_xyL[1], ear_depthL,] 
+        str_keypoints = json.dumps(keypoints)
+        with open('keypoints.json', 'w') as outfile:
+            outfile.write(str_keypoints)
 
-    str_poseImg = {}
-    poseImg = cv2.imread('poseImg.jpg')
-    str_poseImg = base64.b64encode(cv2.imencode('.jpg',poseImg)[1]).decode('ascii')
-    with open('poseImg.json', 'w') as file:
-        file.write(str_poseImg)
+        str_poseImg = {}
+        poseImg = cv2.imread('poseImg.jpg')
+        str_poseImg = base64.b64encode(cv2.imencode('.jpg',poseImg)[1]).decode('ascii')
+        with open('poseImg.json', 'w') as file:
+            file.write(str_poseImg)
         
-    print('create model')
-    lidardataModel.objects.create(poseImg=str_poseImg,keypoints=str_keypoints)
-    bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
-    lidardata = lidardataModel.objects.all()
-    if(len(lidardata)>=1):
-        lidardata=lidardata[len(lidardata)-1]
+        # print('create models')
+        lidardataModel.objects.create(poseImg=str_poseImg,keypoints=str_keypoints)
+        bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
+        # lidardata = lidardataModel.objects.all()
+        # if(len(lidardata)>=1):
+        #     lidardata=lidardata[len(lidardata)-1]
+        # else:
+        #     lidardata=lidardata[0]
+        bodyData = bodyDataModel.objects.all()
+        if(len(bodyData)>=1):
+            bodyData=bodyData[len(bodyData)-1]
+        else:
+            bodyData=bodyData[0]
+        print(bodyData.shoulderWidth)
+        print("measurement success")
     else:
-        lidardata=lidardata[0]
-    bodyData = bodyDataModel.objects.all()
-    if(len(bodyData)>=1):
-        bodyData=bodyData[len(bodyData)-1]
-    else:
-        bodyData=bodyData[0]
-        
-    print(lidardata.keypoints)
-    print(bodyData.shoulderWidth)
+        bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
+        bodyData = bodyDataModel.objects.all()
+        if(len(bodyData)>=1):
+            bodyData=bodyData[len(bodyData)-1]
+        else:
+            bodyData=bodyData[0]
+        print(bodyData.shoulderWidth)
+        print("measurement failed")
     return user_showLidar(request)
     
 def openLidar(request):
@@ -409,14 +417,20 @@ def user_showLidar(request):
     else:
         bodyData=bodyData[0]
         
-    print(lidardata.keypoints)
     print(bodyData.shoulderWidth)
-    
+    if bodyData.shoulderWidth == "0":
+        measurement = 0
+        # measurement = "測量失敗，請再重新測量一次！"
+    else:
+        measurement = 1
+        # measurement = "測量成功，請進入下一步選擇衣服！"
+
     context = {
         'poseImg': lidardata.poseImg,
         'keypoints': lidardata.keypoints,
         'shoulderWidth': bodyData.shoulderWidth,
         'chestWidth': bodyData.chestWidth,
-        'clothingLength': bodyData.clothingLength
+        'clothingLength': bodyData.clothingLength,
+        'measurement': measurement
     }
     return render(request,'user_showLidar.html', context)
