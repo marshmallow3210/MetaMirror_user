@@ -154,6 +154,8 @@ def runLidar(request):
         
         if con <= 0:
             pipeline.stop()
+            cv2.imwrite('poseImg.jpg', color_image)
+            # save to media/UserImg for showing on html
             UserImg = UserImgModel.objects.all()
             path = 'C:/Users/amy21/Documents/GitHub/MetaMirror_user/media/UserImg'
             cv2.imwrite(os.path.join(path, 'poseImg_'+ str(len(UserImg)) +'.jpg'), color_image)
