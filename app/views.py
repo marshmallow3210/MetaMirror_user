@@ -56,6 +56,7 @@ def runLidar(request):
         height = 480
 
     # keypoints detection from mediapipe
+    mp_drawing = mp.solutions.drawing_utils
     mp_holistic = mp.solutions.holistic
     holistic = mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5)
     
@@ -67,7 +68,7 @@ def runLidar(request):
     depth_scale = depth_sensor.get_depth_scale()
     
     # We will be removing the background of objects more than clipping_distance_in_meters meters away
-    clipping_distance_in_meters = 2.0 # meters
+    clipping_distance_in_meters = 2.2 # meters
     clipping_distance = clipping_distance_in_meters / depth_scale
     
     # Create an align object
@@ -106,6 +107,7 @@ def runLidar(request):
             continue
 
         depth_image = np.asanyarray(aligned_depth_frame.get_data())
+        print(depth_image)
         color_image = np.asanyarray(color_frame.get_data())
         
         # 解碼圖片
@@ -117,6 +119,7 @@ def runLidar(request):
         # print('decode_array type is', type(decode_array))
         
         results = holistic.process(color_image)
+        # mp_drawing.draw_landmarks(color_image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
         
         if  con < 2 and con > 0 and results.pose_landmarks:
             nosePos[0] = nosePos[0] + (results.pose_landmarks.landmark[mp_holistic.PoseLandmark.NOSE].x*width)
@@ -284,6 +287,7 @@ def runLidar(request):
     global list_bodyData
     list_bodyData = [0,0,0]
     shoulderWidth = 0
+    chestxyzL = chestxyzR = [0,0,0]
     chestWidth = 0
     clothingLength = 0
     if (shoulderxyzL[0] != 0 and shoulderxyzL[1] != 0 and shoulderxyzL[2] != 0):
@@ -300,7 +304,6 @@ def runLidar(request):
         # up to down
         for i in range(int(shoulderPos[1]), int(shoulderPos[1]) + distY):
             depthL = aligned_depth_frame.get_distance(int(shoulderPos[0]-20), int(i))
-            # print(depthL)
             if (depthL == 0 or depthL > 2.6):
                 # left to right
                 for j in range(int(shoulderPos[0]-20), int(shoulderPos[0])):
@@ -339,7 +342,7 @@ def runLidar(request):
         chestWidth = ((chestxyzL[0]-chestxyzR[0]) ** 2 
                 + (chestxyzL[1]-chestxyzR[1]) ** 2 
                 + (chestxyzL[2]-chestxyzR[2]) ** 2) ** 0.5
-        chestWidth = chestWidth * 100 + 3
+        chestWidth = chestWidth * 100 + 1
         print("INFO: The chestWidth is", chestWidth, "cm")
         list_bodyData[1] = chestWidth
             
@@ -377,10 +380,11 @@ def runLidar(request):
         with open('keypoints.json', 'w') as outfile:
             outfile.write(str_keypoints)
 
+        # store string of poseImg_bg_removed image
         str_poseImg = {}
-        poseImg = cv2.imread('poseImg.jpg')
+        poseImg = cv2.imread('poseImg_bg_removed.jpg')
         str_poseImg = base64.b64encode(cv2.imencode('.jpg',poseImg)[1]).decode('ascii')
-        with open('poseImg.json', 'w') as file:
+        with open('poseImg_bg_removed.json', 'w') as file:
             file.write(str_poseImg)
         
         lidardataModel.objects.create(poseImg=str_poseImg,keypoints=str_keypoints)
@@ -419,11 +423,11 @@ def user_showLidar(request):
     else:
         bodyData=bodyData[0]
         
-    print('shoulderWidth', bodyData.shoulderWidth)
-    if bodyData.shoulderWidth == "0":
-        measurement = 0
-    else:
+    print('shoulderWidth', float(bodyData.shoulderWidth))
+    if float(bodyData.shoulderWidth) >= 15.0 and float(bodyData.shoulderWidth) <= 75.0:
         measurement = 1
+    else:
+        measurement = 0
 
     UserImg = UserImgModel.objects.all()
     if(len(UserImg)>=1):
