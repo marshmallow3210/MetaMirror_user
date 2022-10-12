@@ -14,14 +14,6 @@ from app.models import UserImgModel, bodyDataModel, lidardataModel
 from django.conf import settings
 import os
 
-# INPUT_IMAGE = settings.MEDIA_ROOT / 'UserImg.jpg'
-
-def home(request):
-    return render(request,'home.html',locals())
-
-def user_manual(request):
-    return render(request,'user_manual.html',locals())
-
 def runLidar(request):    
     # Create a pipeline
     pipeline = rs.pipeline()
@@ -107,7 +99,6 @@ def runLidar(request):
             continue
 
         depth_image = np.asanyarray(aligned_depth_frame.get_data())
-        print(depth_image)
         color_image = np.asanyarray(color_frame.get_data())
         
         # 解碼圖片
@@ -119,6 +110,7 @@ def runLidar(request):
         # print('decode_array type is', type(decode_array))
         
         results = holistic.process(color_image)
+        # show mediapipe keypoints
         # mp_drawing.draw_landmarks(color_image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS)
         
         if  con < 2 and con > 0 and results.pose_landmarks:
@@ -290,7 +282,8 @@ def runLidar(request):
     chestxyzL = chestxyzR = [0,0,0]
     chestWidth = 0
     clothingLength = 0
-    if (shoulderxyzL[0] != 0 and shoulderxyzL[1] != 0 and shoulderxyzL[2] != 0):
+    # check measurement(if mediapipe capture the correct shoulder position and the correct wrist position)
+    if (shoulderxyzL[0] != 0 and shoulderxyzL[1] != 0 and shoulderxyzL[2] != 0 and wrist_xyL[1] >= shoulder_xyL[1] and wrist_xyR[1] >= shoulder_xyR[1]):
         # 0-shoulderWidth
         shoulderWidth = ((shoulderxyzL[0]-shoulderxyzR[0]) ** 2 
                 + (shoulderxyzL[1]-shoulderxyzR[1]) ** 2 
