@@ -11,3 +11,6 @@ class bodyDataModel(models.Model):
     
 class UserImgModel(models.Model):
     image = models.ImageField(upload_to='UserImg/')
+    
+class bgRemovedImgModel(models.Model):
+    image = models.ImageField(upload_to='bgRemovedImg/')

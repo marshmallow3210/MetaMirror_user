@@ -10,7 +10,7 @@ from skimage import measure, filters
 from django.shortcuts import render
 from django.http import StreamingHttpResponse
 from app.admin import UserImgAdmin
-from app.models import UserImgModel, bodyDataModel, lidardataModel
+from app.models import UserImgModel, bgRemovedImgModel, bodyDataModel, lidardataModel
 from django.conf import settings
 import os
 
@@ -60,7 +60,7 @@ def runLidar(request):
     depth_scale = depth_sensor.get_depth_scale()
     
     # We will be removing the background of objects more than clipping_distance_in_meters meters away
-    clipping_distance_in_meters = 2.2 # meters
+    clipping_distance_in_meters = 1.7 # meters
     clipping_distance = clipping_distance_in_meters / depth_scale
     
     # Create an align object
@@ -186,7 +186,12 @@ def runLidar(request):
     kernel = np.ones((3, 3), np.uint8)
     images = cv2.morphologyEx(images, cv2.MORPH_CLOSE, kernel) # closing
     cv2.imwrite('poseImg_bg_removed.jpg', images)
-    
+    # save to media/bgRemovedImg for showing on html
+    bgRemovedImg = bgRemovedImgModel.objects.all()
+    path = 'C:/Users/amy21/Documents/GitHub/MetaMirror_user/media/bgRemovedImg'
+    cv2.imwrite(os.path.join(path, 'bgRemovedImg_'+ str(len(UserImg)) +'.jpg'), images)
+    bgRemovedImgModel.objects.create(image='bgRemovedImg/bgRemovedImg_'+ str(len(bgRemovedImg)) +'.jpg')
+            
     
     # get keypoints' 3d coordinate
     # nose
@@ -283,7 +288,7 @@ def runLidar(request):
     chestWidth = 0
     clothingLength = 0
     # check measurement(if mediapipe capture the correct shoulder position and the correct wrist position)
-    if (shoulderxyzL[0] != 0 and shoulderxyzL[1] != 0 and shoulderxyzL[2] != 0 and wrist_xyL[1] >= shoulder_xyL[1] and wrist_xyR[1] >= shoulder_xyR[1]):
+    if (shoulderxyzL[0] != 0 and shoulderxyzL[1] != 0 and shoulderxyzL[2] != 0):
         # 0-shoulderWidth
         shoulderWidth = ((shoulderxyzL[0]-shoulderxyzR[0]) ** 2 
                 + (shoulderxyzL[1]-shoulderxyzR[1]) ** 2 
@@ -380,6 +385,8 @@ def runLidar(request):
         with open('poseImg_bg_removed.json', 'w') as file:
             file.write(str_poseImg)
         
+        # print('sleeping')
+        # time.sleep(2)
         lidardataModel.objects.create(poseImg=str_poseImg,keypoints=str_keypoints)
         bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
         bodyData = bodyDataModel.objects.all()

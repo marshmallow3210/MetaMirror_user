@@ -1,5 +1,5 @@
 from django import forms
-from .models import lidardataModel,bodyDataModel,UserImgModel
+from .models import lidardataModel,bodyDataModel,UserImgModel,bgRemovedImgModel
 
 class lidardataModelForm(forms.ModelForm):
     class Meta:
@@ -14,4 +14,9 @@ class bodyDataModelForm(forms.ModelForm):
 class UserImgModelForm(forms.ModelForm):
     class Meta:
         model = UserImgModel
+        fields=('image',)
+        
+class bgRemovedImgModelForm(forms.ModelForm):
+    class Meta:
+        model = bgRemovedImgModel
         fields=('image',)
