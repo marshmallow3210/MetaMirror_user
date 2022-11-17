@@ -14,3 +14,6 @@ class UserImgModel(models.Model):
     
 class bgRemovedImgModel(models.Model):
     image = models.ImageField(upload_to='bgRemovedImg/')
+    
+class originalPoseImgModel(models.Model):
+    originalPoseImg = models.TextField()

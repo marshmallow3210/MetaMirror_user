@@ -21,6 +21,7 @@
         <form method="post" action="http://25.69.108.176:8000/user_selectCloth">
             {% csrf_token %}
             <br>
+            <input id="originalPoseImg" name="originalPoseImg" type="hidden">
             <input id="poseImg" name="poseImg" type="hidden">
             <input id="keypoints" name="keypoints" type="hidden">
             <input id="shoulderWidth" name="shoulderWidth" type="hidden">
@@ -29,7 +30,7 @@
             <button id="user_selectCloth" onclick="" type="submit">確認漂亮的自己並進到下一步去選擇漂亮衣服</button>
         </form>
         <p id="sendData"></p>
-        <p><strong>You have visited this page: </strong><span id="visits">0 times</span></p>
+        <p><strong>已重新測量: </strong><span id="visits">0 次</span></p>
     </div>
 </body>
 <script type="text/javascript" src="http://blogs.sitepointstatic.com/examples/tech/js-session/json-serialization.js"></script>
@@ -55,6 +56,7 @@
         else {
             document.getElementById("openLidar").src="{{ UserImg.image.url }}";
             document.getElementById("openLidarBTN").value = "重新測量身材";
+            document.getElementById("originalPoseImg").value = '{{ originalPoseImg }}';
             document.getElementById("poseImg").value = '{{ poseImg }}';
             document.getElementById("keypoints").value = '{{ keypoints }}';
             document.getElementById("shoulderWidth").value = "{{ shoulderWidth }}";

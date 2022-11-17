@@ -10,7 +10,7 @@ from skimage import measure, filters
 from django.shortcuts import render
 from django.http import StreamingHttpResponse
 from app.admin import UserImgAdmin
-from app.models import UserImgModel, bgRemovedImgModel, bodyDataModel, lidardataModel
+from app.models import UserImgModel, bgRemovedImgModel, bodyDataModel, lidardataModel, originalPoseImgModel
 from django.conf import settings
 import os
 
@@ -60,7 +60,7 @@ def runLidar(request):
     depth_scale = depth_sensor.get_depth_scale()
     
     # We will be removing the background of objects more than clipping_distance_in_meters meters away
-    clipping_distance_in_meters = 1.7 # meters
+    clipping_distance_in_meters = 1.8 # meters
     clipping_distance = clipping_distance_in_meters / depth_scale
     
     # Create an align object
@@ -150,11 +150,13 @@ def runLidar(request):
         if con <= 0:
             pipeline.stop()
             cv2.imwrite('poseImg.jpg', color_image)
+            
             # save to media/UserImg for showing on html
             UserImg = UserImgModel.objects.all()
             path = 'C:/Users/amy21/Documents/GitHub/MetaMirror_user/media/UserImg'
             cv2.imwrite(os.path.join(path, 'poseImg_'+ str(len(UserImg)) +'.jpg'), color_image)
             UserImgModel.objects.create(image='UserImg/poseImg_'+ str(len(UserImg)) +'.jpg')
+
             break
         
     # Intrinsics & Extrinsics
@@ -385,8 +387,14 @@ def runLidar(request):
         with open('poseImg_bg_removed.json', 'w') as file:
             file.write(str_poseImg)
         
-        # print('sleeping')
-        # time.sleep(2)
+        # store string of original pose image
+        str_originalPoseImg = {}
+        originalPoseImg = cv2.imread('poseImg.jpg')
+        str_originalPoseImg = base64.b64encode(cv2.imencode('.jpg',originalPoseImg)[1]).decode('ascii')
+        with open('poseImg.json', 'w') as file:
+            file.write(str_originalPoseImg)
+            
+        originalPoseImgModel.objects.create(originalPoseImg=str_originalPoseImg,)
         lidardataModel.objects.create(poseImg=str_poseImg,keypoints=str_keypoints)
         bodyDataModel.objects.create(shoulderWidth=list_bodyData[0],chestWidth=list_bodyData[1],clothingLength=list_bodyData[2])
         bodyData = bodyDataModel.objects.all()
@@ -412,12 +420,20 @@ def openLidar(request):
 
 def user_showLidar(request):
     print('showLidar')
+    
+    originalPoseImg = originalPoseImgModel.objects.all()
+    if(len(originalPoseImg)>=1):
+        originalPoseImg=originalPoseImg[len(originalPoseImg)-1]
+    else:
+        originalPoseImg=originalPoseImg[0]
+        
     lidardata = lidardataModel.objects.all()
     if(len(lidardata)>=1):
         lidardata=lidardata[len(lidardata)-1]
     else:
         lidardata=lidardata[0]
     bodyData = bodyDataModel.objects.all()
+    
     if(len(bodyData)>=1):
         bodyData=bodyData[len(bodyData)-1]
     else:
@@ -436,6 +452,7 @@ def user_showLidar(request):
         UserImg=UserImg[0]
     
     context = {
+        'originalPoseImg': originalPoseImg.originalPoseImg,
         'poseImg': lidardata.poseImg,
         'keypoints': lidardata.keypoints,
         'shoulderWidth': bodyData.shoulderWidth,
